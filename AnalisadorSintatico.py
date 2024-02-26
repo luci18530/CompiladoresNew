@@ -41,7 +41,8 @@ class AnalisadorSintatico:
             print("Estrutura do programa não foi devidamente construída.")
 
     def programa(self):
-        #  # Verifica a estrutura do programa, começando com a palavra-chave 'program'.
+        # Verifica a estrutura do programa, começando com a palavra-chave 'program'.
+        # tem que ter no minimo <program> <identificador> ; <decs_var> ou <decs_subp> ou <comando_composto> . 
         print(f"Analisando programa: {self.lexemaAtual()}")
         if self.lexemaAtual() == "program":
             self.proximoToken()
@@ -73,11 +74,12 @@ class AnalisadorSintatico:
         # Processa uma lista de declarações de variáveis.
         self.lista_de_identificadores()
         if self.lexemaAtual() == ":":
+            # opa vamos ver se tem um tipo dessa variavel
             self.proximoToken()
             self.tipo()
-            if self.lexemaAtual() == ";":
+            if self.lexemaAtual() == ";":               
                 self.proximoToken()
-                self.lista_dec_var2()
+                self.lista_dec_var2() # pula a linha e verifica se tem mais variaveis
             else:
                 print("Esperava ; e recebeu " + self.lexemaAtual())
                 sys.exit(0)
@@ -89,12 +91,13 @@ class AnalisadorSintatico:
 
         if self.tipoAtual() == "Identificador":
             self.lista_de_identificadores()
-            if self.lexemaAtual() == ":":
+            if self.lexemaAtual() == ":": 
+                # opa vamos ver se tem um tipo dessa variavel
                 self.proximoToken()
                 self.tipo()
                 if self.lexemaAtual() == ";":
                     self.proximoToken()
-                    self.lista_dec_var2()
+                    self.lista_dec_var2() # pula a linha e verifica se tem mais variaveis
                 else:
                     print("Esperava ; e recebeu " + self.lexemaAtual())
                     sys.exit(0)
@@ -106,17 +109,17 @@ class AnalisadorSintatico:
         # Processa uma lista de identificadores
         if self.tipoAtual() == "Identificador":
             self.proximoToken()
-            self.lista_de_identificadores2()
+            self.lista_de_identificadores2() # vamos ver se tem outros identificadores
         else:
             print("Esperava Identificador e recebeu " + self.tipoAtual())
             sys.exit(0)
 
     def lista_de_identificadores2(self):
         if self.lexemaAtual() == ",":
-            self.proximoToken()
+            self.proximoToken() # opa tem alguma coisa depois
             if self.tipoAtual() == "Identificador":
                 self.proximoToken()
-                self.lista_de_identificadores2()
+                self.lista_de_identificadores2() # vamos ver se tem outros identificadores recursivamente
             else:
                 print("Esperava Identificador e recebeu " + self.tipoAtual())
                 sys.exit(0)
@@ -169,6 +172,7 @@ class AnalisadorSintatico:
             if self.lexemaAtual() == ")":
                 self.proximoToken()
             else:
+                print("aaaaa")
                 print("Esperava ) e recebeu " + self.lexemaAtual())
                 sys.exit(0)
 
@@ -184,6 +188,7 @@ class AnalisadorSintatico:
             sys.exit(0)
 
     def lista_de_parametros2(self):
+        """Processa o restante dos parâmetros após um ponto-e-vírgula."""
         if self.lexemaAtual() == ";":
             self.proximoToken()
             self.lista_de_identificadores()
@@ -191,9 +196,15 @@ class AnalisadorSintatico:
                 self.proximoToken()
                 self.tipo()
                 self.lista_de_parametros2()
-            else:
-                print("Esperava : e recebeu " + self.lexemaAtual())
-                sys.exit(0)
+        elif self.lexemaAtual() == ",":
+            # múltiplos parâmetros separados por vírgula dentro dos parênteses.
+            self.proximoToken()
+            self.lista_de_identificadores()
+            if self.lexemaAtual() == ":":
+                self.proximoToken()
+                self.tipo()
+                # Chama recursivamente para tratar mais parâmetros após a vírgula.
+                self.lista_de_parametros2()
 
     def comando_composto(self):
         # Processa um bloco de comandos, iniciando com 'begin' e terminando com 'end'.
@@ -205,8 +216,6 @@ class AnalisadorSintatico:
             if self.lexemaAtual() == "end":
                 self.proximoToken()
             else:
-                if self.lexemaAtual() == "=":
-                    return "Esperava := e recebeu " + self.lexemaAtual()
                 print("Esperava end e recebeu " + self.lexemaAtual())
                 sys.exit(0)
         else:

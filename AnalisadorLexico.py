@@ -45,8 +45,12 @@ class AnalisadorLexico:
             elif linha[i] in ':=<>':
                 # Identifica operadores de atribuição e relacionais.
                 lexema, i = self.extrair_simbolo(linha, i)
-                tipo = "Operador de Atribuição" if lexema == ":=" else "Operador Relacional"
-                self.adiciona_token(lexema, tipo, numLinha)
+                if lexema == "=":
+                    # Aqui é onde detectamos o uso incorreto do "=" como operador de atribuição.
+                    self.registrar_erro(lexema, numLinha)
+                else:
+                    tipo = "Operador de Atribuição" if lexema == ":=" else "Operador Relacional"
+                    self.adiciona_token(lexema, tipo, numLinha)
             elif linha[i] in '+-':
                 # Identifica operadores aditivos.
                 self.adiciona_token(linha[i], "Operador Aditivo", numLinha)
@@ -60,16 +64,13 @@ class AnalisadorLexico:
             i += 1
 
     def extrair_lexema(self, linha, i):
-        # Extrai lexemas que começam com letra (palavras reservadas ou identificadores). 
         lexema = ""
         while i < len(linha) and (linha[i].isalpha() or linha[i].isdigit() or linha[i] == '_'):
-            # Identifica letras, dígitos e underline.
             lexema += linha[i]
             i += 1
         return lexema, i - 1
 
     def determinar_tipo_lexema(self, lexema):
-        # Determina o tipo do lexema (palavra reservada ou identificador).
         if lexema in self.PALAVRAS_RESERVADAS:
             return "Palavra Reservada"
         elif lexema == "or":
@@ -80,7 +81,6 @@ class AnalisadorLexico:
             return "Identificador"
 
     def extrair_numero(self, linha, i):
-        # Extrai lexemas que começam com dígito (números inteiros ou reais).
         lexema = ""
         primeiroPonto = True
         while i < len(linha) and (linha[i].isdigit() or (linha[i] == '.' and primeiroPonto)):
@@ -92,7 +92,6 @@ class AnalisadorLexico:
         return lexema, i - 1, tipo
 
     def extrair_simbolo(self, linha, i):
-        # Extrai operadores de atribuição e relacionais.
         lexema = linha[i]
         if i + 1 < len(linha) and linha[i + 1] in ('=', '>'):
             i += 1
@@ -100,12 +99,11 @@ class AnalisadorLexico:
         return lexema, i
 
     def registrar_erro(self, caracter, numLinha):
-        # Registra um erro quando um caractere inválido é encontrado.
         self.erroInvalido = True
-        self.msgErro = f"Erro encontrado: Caracter inválido '{caracter}', na linha {numLinha}."
+        self.msgErro = f"Erro encontrado: Caracter inválido ou uso incorreto '{caracter}', na linha {numLinha}."
 
     def executar(self, path):
-        self.__init__()  # Reinicializa as variáveis de instância e processa o arquivo de entrada.
+        self.__init__()
         with open(path, 'r') as file:
             for numLinha, linha in enumerate(file, start=1):
                 self.analisar_linha(linha, numLinha)
