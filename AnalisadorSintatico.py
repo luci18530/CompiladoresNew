@@ -2,11 +2,15 @@ import sys
 
 from AnalisadorLexico import AnalisadorLexico
 
+
 class AnalisadorSintatico:
+    
     def __init__(self, path):
         self.tokens = []
         self.index = 0
+        self.beginstack = 0
         self.AnalisadorSintatico(path)
+        
 
     def proximoToken(self):
         """Incrementa o índice e imprime o token atual para debug."""
@@ -54,7 +58,7 @@ class AnalisadorSintatico:
                     self.decs_subp()
                     self.comando_composto()
                     if self.lexemaAtual() == ".":
-                        print("Programa analisado com sucesso.")
+                        print("Programa analisado com sucesso. Sem erros sintáticos.")
                     else:
                         print("Esperava . e recebeu " + self.lexemaAtual())
                 else:
@@ -207,26 +211,46 @@ class AnalisadorSintatico:
                 self.lista_de_parametros2()
 
     def comando_composto(self):
-        # Processa um bloco de comandos, iniciando com 'begin' e terminando com 'end'.
+        """Processa um bloco de comandos, iniciando com 'begin' e terminando com 'end'."""
         if self.lexemaAtual() == "begin":
+            self.beginstack += 1
+            print("quantidade de begin: " + str(self.beginstack))
             self.proximoToken()
-            # Verifica se o próximo token não é 'end', indicando que há comandos para processar
-            if self.lexemaAtual() != "end":
-                self.comandos_opcionais()
-            if self.lexemaAtual() == "end":
+            self.comandos_opcionais()  # Chamada atualizada para tratar todos os comandos opcionais corretamente.
+            
+            if self.lexemaAtual() == "end" and self.tokens[self.index + 1].lexema == "." and self.beginstack == 1:             
+                print("Programa analisado com sucesso. Sem erros sintáticos.")               
+                sys.exit(0)
+
+            elif self.lexemaAtual() == "end":
+                self.beginstack -= 1
+                print("quantidade de begin: " + str(self.beginstack))
                 self.proximoToken()
+          
             else:
-                print("Esperava end e recebeu " + self.lexemaAtual())
+                self.lista_de_comandos()
+
+                # gambiarra emergencial
+                if self.lexemaAtual() == "end" and self.tokens[self.index + 1].lexema == "." and self.beginstack == 1:
+                    print("Programa analisado com sucesso. Sem erros Sintáticos.")
+                    sys.exit(0)
+                else:
+                    print(f"Esperava 'end' e recebeu '{self.lexemaAtual()}'")
                 sys.exit(0)
         else:
-            print("Esperava begin e recebeu " + self.lexemaAtual())
+            print(f"Esperava 'begin' e recebeu '{self.lexemaAtual()}'")
             sys.exit(0)
 
 
     def comandos_opcionais(self):
-        # Processa uma lista de comandos opcionais.
-        if self.tipoAtual() in ["Identificador", "begin", "if", "while", "for"]:
+        """Processa uma lista de comandos opcionais dentro de um comando composto."""
+        # Esta função precisa tratar corretamente a presença de múltiplos comandos,
+        # incluindo estruturas de controle como 'while'.
+        while self.tipoAtual() in ["Identificador", "begin", "if", "while", "for"]:
             self.lista_de_comandos()
+            if self.lexemaAtual() == "end":
+                # Se chegou ao 'end' do bloco, não tenta processar mais comandos.
+                break
 
     def lista_de_comandos(self):
         self.comando()
@@ -239,6 +263,7 @@ class AnalisadorSintatico:
             self.lista_de_comandos2()
 
     def comando(self):
+        
         # Analisa um único comando, podendo ser uma atribuição, uma ativação de procedimento, estruturas de controle, etc.
         if self.tipoAtual() == "Identificador" and self.tokens[self.index + 1].tipo == "Operador de Atribuição":
             self.variavel()
@@ -264,7 +289,7 @@ class AnalisadorSintatico:
             self.expressao()
             if self.lexemaAtual() == "do":
                 self.proximoToken()
-                self.comando()
+                self.comando_composto()
             else:
                 print("Esperava do e recebeu " + self.lexemaAtual())
                 sys.exit(0)
@@ -292,7 +317,7 @@ class AnalisadorSintatico:
         else:
             # se o token for um end, e o seguinte for um . (ponto), não há comandos a serem processados
             if self.lexemaAtual() == "end" and self.tokens[self.index + 1].lexema == ".":
-                return "s"
+                return "sucesso"
             print("Esperava comando e recebeu " + self.lexemaAtual())
             print("Tipo: " + self.lexemaAtual())
             sys.exit(0)

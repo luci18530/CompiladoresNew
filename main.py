@@ -1,7 +1,7 @@
 from AnalisadorSintatico import AnalisadorSintatico
 
 def main():
-    path = 'Test4.pas'
+    path = 'Test3.pas'
     try:
         AS = AnalisadorSintatico(path)
         
