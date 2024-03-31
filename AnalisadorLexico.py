@@ -49,7 +49,7 @@ class AnalisadorLexico:
                     # Aqui é onde detectamos o uso incorreto do "=" como operador de atribuição.
                     self.registrar_erro(lexema, numLinha)
                 else:
-                    tipo = "Operador de Atribuição" if lexema == ":=" else "Operador Relacional"
+                    tipo = "Operador de Atribuicao" if lexema == ":=" else "Operador Relacional"
                     self.adiciona_token(lexema, tipo, numLinha)
             elif linha[i] in '+-':
                 # Identifica operadores aditivos.
@@ -77,6 +77,8 @@ class AnalisadorLexico:
             return "Operador Aditivo"
         elif lexema == "and":
             return "Operador Multiplicativo"
+        elif lexema == "true" or lexema == "false":
+            return "Booleano"   
         else:
             return "Identificador"
 
@@ -88,7 +90,7 @@ class AnalisadorLexico:
                 primeiroPonto = False
             lexema += linha[i]
             i += 1
-        tipo = "Número Inteiro" if primeiroPonto else "Número Real"
+        tipo = "Numero Inteiro" if primeiroPonto else "Numero Real"
         return lexema, i - 1, tipo
 
     def extrair_simbolo(self, linha, i):
