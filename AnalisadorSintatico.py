@@ -18,6 +18,7 @@ class AnalisadorSintatico:
         self.tokenBuffer = [] # Buffer para armazenar identificadores {SEMÂNTICO}
         self.idsTipados = [] # Lista de identificadores tipados {SEMÂNTICO}
         self.pilhaControleTipo = [] # Pilha para controle de tipos {SEMÂNTICO}
+        self.nomeprograma = ""
         self.AnalisadorSintatico(path)
 
     def debugpilhas(self):
@@ -25,12 +26,14 @@ class AnalisadorSintatico:
         print(self.pilhaControleTipo)
         
     def proximoToken(self):
+        if self.lexemaAtual() == self.nomeprograma and self.linhaAtual() > 1:
+            print("Nome do programa não pode ser usado")
+            sys.exit(0)
         """Incrementa o índice e imprime o token atual para debug."""
         if self.index < len(self.tokens) - 1:
             self.index += 1
             token_atual = self.tokens[self.index]
             print(f"Token atual: {token_atual.lexema} (Tipo: {token_atual.tipo})")
-            print(self.pilhaControleTipo)
         else:
             print("Aviso: Tentativa de acessar um token além do limite da lista.")
 
@@ -74,11 +77,12 @@ class AnalisadorSintatico:
         # tem que ter no minimo <program> <identificador> ; <decs_var> ou <decs_subp> ou <comando_composto> . 
         print(f"Analisando programa: {self.lexemaAtual()}")
         if self.lexemaAtual() == "program":
-            self.pilhaIdentificadores.append("$")
-            self.idsTipados.append(IdentificadorTipado("$", "mark"))
+            self.pilhaIdentificadores.append("$") # marca de fim de pilha
+            self.idsTipados.append(IdentificadorTipado("$", "mark")) 
             self.proximoToken()
             if self.tipoAtual() == "Identificador":
-                self.pilhaIdentificadores.append(self.lexemaAtual())
+                self.pilhaIdentificadores.append(self.lexemaAtual()) # adiciona o lexema do identificador do programa na pilha
+                self.nomeprograma = self.lexemaAtual()
                 self.proximoToken()
                 if self.lexemaAtual() == ";":
                     self.proximoToken()
@@ -99,7 +103,6 @@ class AnalisadorSintatico:
     def decs_var(self):
         # Analisa declarações de variáveis iniciando com a palavra-chave 'var'.
         if self.lexemaAtual() == "var":
-            escopovar = True
             self.proximoToken()
             self.lista_dec_var()
 
@@ -546,7 +549,7 @@ class AnalisadorSintatico:
             self.proximoToken()
             self.expressao()
             if self.lexemaAtual() != ")":
-                print("Esperava ) e recebeu " + self.lexemaAtual())
+                print("(fator) Esperava ) e recebeu " + self.lexemaAtual())
                 sys.exit(0)
             else:
                 self.proximoToken()
