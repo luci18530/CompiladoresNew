@@ -13,11 +13,11 @@ class AnalisadorSintatico:
     def __init__(self, path):
         self.tokens = []
         self.index = 0
-        # Pilhas para controle de fluxo e análise de tipos {SEMÂNTICO}
+        # Pilhas para controle de fluxo e análise de tipos
         self.pilhaIdentificadores = [] 
-        self.tokenBuffer = [] # Buffer para armazenar identificadores {SEMÂNTICO}
-        self.idsTipados = [] # Lista de identificadores tipados {SEMÂNTICO}
-        self.pilhaControleTipo = [] # Pilha para controle de tipos {SEMÂNTICO}
+        self.tokenBuffer = [] # Buffer para armazenar identificadores 
+        self.identificadoresTipados = [] # Lista de identificadores tipados 
+        self.pilhaControleTipo = [] # Pilha para controle de tipos 
         self.nomeprograma = ""
         self.AnalisadorSintatico(path)
 
@@ -78,7 +78,7 @@ class AnalisadorSintatico:
         print(f"Analisando programa: {self.lexemaAtual()}")
         if self.lexemaAtual() == "program":
             self.pilhaIdentificadores.append("$") # marca de fim de pilha
-            self.idsTipados.append(IdentificadorTipado("$", "mark")) 
+            self.identificadoresTipados.append(IdentificadorTipado("$", "mark")) 
             self.proximoToken()
             if self.tipoAtual() == "Identificador":
                 self.pilhaIdentificadores.append(self.lexemaAtual()) # adiciona o lexema do identificador do programa na pilha
@@ -114,9 +114,9 @@ class AnalisadorSintatico:
             self.proximoToken()
             tipo = self.tipo()
             if self.lexemaAtual() == ";":
-                for identificador in self.tokenBuffer:
-                    self.idsTipados.append(IdentificadorTipado(identificador, tipo))
-                self.tokenBuffer.clear()               
+                for identificador in self.tokenBuffer: # adiciona os identificadores na lista de identificadores tipados
+                    self.identificadoresTipados.append(IdentificadorTipado(identificador, tipo))
+                self.tokenBuffer.clear() # limpa o buffer                
                 self.proximoToken()
                 self.lista_dec_var2() # pula a linha e verifica se tem mais variaveis
             else:
@@ -136,7 +136,7 @@ class AnalisadorSintatico:
                 tipo = self.tipo()
                 if self.lexemaAtual() == ";":
                     for identificador in self.tokenBuffer:
-                        self.idsTipados.append(IdentificadorTipado(identificador, tipo))
+                        self.identificadoresTipados.append(IdentificadorTipado(identificador, tipo))
                     self.tokenBuffer.clear()
                     self.proximoToken()
                     self.lista_dec_var2() # pula a linha e verifica se tem mais variaveis
@@ -151,6 +151,7 @@ class AnalisadorSintatico:
         # Processa uma lista de identificadores
         if self.tipoAtual() == "Identificador":
             declarou = False
+            # verifica se o identificador já foi declarado dentro do escopo
             for identificador in reversed(self.pilhaIdentificadores):
                 if not identificador == "$":
                     if identificador == self.lexemaAtual():
@@ -159,9 +160,12 @@ class AnalisadorSintatico:
                 else:
                     break
             
+            # se o identificador já foi declarado, exibe mensagem de erro e encerra o programa
             if declarou:
                 print(f"Erro de escopo: variável {self.lexemaAtual()} já declarada.")
                 exit(0)
+            
+            # se o identificador não foi declarado, adiciona-o à pilha de identificadores
             else:
                 self.pilhaIdentificadores.append(self.lexemaAtual())
                 self.tokenBuffer.append(self.lexemaAtual())
@@ -177,6 +181,7 @@ class AnalisadorSintatico:
             self.proximoToken() # opa tem alguma coisa depois
             if self.tipoAtual() == "Identificador":
                 declarou = False
+                # verifica se o identificador já foi declarado dentro do escopo
                 for identificador in reversed(self.pilhaIdentificadores):
                     if not identificador == "$":
                         if identificador == self.lexemaAtual():
@@ -185,9 +190,12 @@ class AnalisadorSintatico:
                     else:
                         break
                 
+                # se o identificador já foi declarado, exibe mensagem de erro e encerra o programa
                 if declarou:
                     print(f"Erro de escopo: variável {self.lexemaAtual()} já declarada.")
                     exit(0)
+
+                # se o identificador não foi declarado, adiciona-o à pilha de identificadores
                 else:
                     self.pilhaIdentificadores.append(self.lexemaAtual())
                     self.tokenBuffer.append(self.lexemaAtual())
@@ -211,6 +219,7 @@ class AnalisadorSintatico:
         if self.lexemaAtual() == "procedure":
             self.dec_subp() # se tiver um subprograma, chama a função para analisar
             if self.lexemaAtual() == ";":
+                # limpa a pilha de identificadores e a lista de identificadores tipados
                 for identificador in self.pilhaIdentificadores:
                     if not identificador == "$":
                         self.pilhaIdentificadores.pop()
@@ -218,11 +227,11 @@ class AnalisadorSintatico:
                         self.pilhaIdentificadores.pop()
                         break
 
-                for identificador in self.idsTipados:
+                for identificador in self.identificadoresTipados:
                     if not identificador.identificador == "$":
-                        self.idsTipados.pop()
+                        self.identificadoresTipados.pop()
                     else:
-                        self.idsTipados.pop()
+                        self.identificadoresTipados.pop()
                         break
 
                 self.proximoToken()
@@ -237,6 +246,7 @@ class AnalisadorSintatico:
             if self.tipoAtual() == "Identificador": # ok tem procedura e tem um identificador, vamos ver se tem argumentos
                 declarou = False
 
+                # verifica se o identificador já foi declarado dentro do escopo
                 for identificador in self.pilhaIdentificadores:
                     if not identificador == "$":
                         if identificador == self.lexemaAtual():
@@ -245,13 +255,16 @@ class AnalisadorSintatico:
                     else:
                         break
 
+                # se o identificador já foi declarado, exibe mensagem de erro e encerra o programa
                 if declarou:
                     print(f"Erro de escopo: variável {self.lexemaAtual()} já declarada.")
                     exit(0)
+                
+                # se o identificador não foi declarado, adiciona-o à pilha de identificadores
                 else:
                     self.pilhaIdentificadores.append(self.lexemaAtual())
                     self.pilhaIdentificadores.append("$")
-                    self.idsTipados.append(IdentificadorTipado("$", "mark"))
+                    self.identificadoresTipados.append(IdentificadorTipado("$", "mark"))
 
 
                 self.proximoToken()
@@ -290,8 +303,9 @@ class AnalisadorSintatico:
             self.proximoToken()
             tipo = self.tipo()
 
+            # adiciona os identificadores tipados no buffer na lista de identificadores tipados
             for identificador in self.tokenBuffer:
-                self.idsTipados.append(IdentificadorTipado(identificador, tipo))
+                self.identificadoresTipados.append(IdentificadorTipado(identificador, tipo))
 
             self.tokenBuffer.clear()
             self.lista_de_parametros2() # vamos ver se tem mais parametros
@@ -309,7 +323,7 @@ class AnalisadorSintatico:
                 tipo = self.tipo()
 
                 for identificador in self.tokenBuffer:
-                    self.idsTipados.append(IdentificadorTipado(identificador, tipo))
+                    self.identificadoresTipados.append(IdentificadorTipado(identificador, tipo))
 
                 self.tokenBuffer.clear()
                 self.lista_de_parametros2()
@@ -424,11 +438,14 @@ class AnalisadorSintatico:
     def variavel(self):
         # Verifica se o token atual é um identificador válido para uma variável.
         if self.tipoAtual() == "Identificador":
+            # Verifica se o identificador já foi declarado anteriormente
+            # Se não foi, exibe mensagem de erro e encerra o programa
             if self.lexemaAtual() not in self.pilhaIdentificadores:
                 print(f"O identificador {self.lexemaAtual()} não foi declarado anteriormente.")
                 exit(0)
 
-            for identificador in self.idsTipados:
+            # Se foi, adiciona o tipo do identificador à pilha de controle de tipos
+            for identificador in self.identificadoresTipados:
                 if identificador.identificador == self.lexemaAtual():
                     self.pilhaControleTipo.append(identificador.tipo)
                     break
@@ -445,7 +462,7 @@ class AnalisadorSintatico:
                 exit(0)
 
             
-            for identificador in self.idsTipados:
+            for identificador in self.identificadoresTipados:
                 if identificador.identificador == self.lexemaAtual():
                     self.pilhaControleTipo.append(identificador.tipo)
                     break
@@ -536,7 +553,6 @@ class AnalisadorSintatico:
             self.pilhaControleTipo.append("integer")
             self.proximoToken()
             
-            
         elif self.tipoAtual() in ["Numero Real"]:
             self.pilhaControleTipo.append("real")
             self.proximoToken()
@@ -549,7 +565,7 @@ class AnalisadorSintatico:
             self.proximoToken()
             self.expressao()
             if self.lexemaAtual() != ")":
-                print("(fator) Esperava ) e recebeu " + self.lexemaAtual())
+                print(" Esperava ) e recebeu " + self.lexemaAtual())
                 sys.exit(0)
             else:
                 self.proximoToken()
@@ -584,15 +600,19 @@ class AnalisadorSintatico:
             sys.exit(0)
 
     def verificacaoAritmetica(self):
+        # Verifica se os tipos dos dois operandos superiores da pilha de controle de tipos são compatíveis com a operação aritmética.
         top = self.pilhaControleTipo.pop()
         subtop = self.pilhaControleTipo.pop()
 
         if top == "integer" and subtop == "integer":
             self.pilhaControleTipo.append("integer")
+
         elif top == "real" and subtop == "real":
             self.pilhaControleTipo.append("real")
+
         elif top == "integer" and subtop == "real":
             self.pilhaControleTipo.append("real")
+
         elif top == "real" and subtop == "integer":
             self.pilhaControleTipo.append("real")
         else:
@@ -603,20 +623,20 @@ class AnalisadorSintatico:
             exit(0)
 
     def verificacaoRelacional(self):
+        # Verifica se os tipos dos dois operandos superiores da pilha de controle de tipos são compatíveis com a operação relacional.
         top = self.pilhaControleTipo.pop()
         subtop = self.pilhaControleTipo.pop()
 
         if top == "integer" and subtop == "integer":      
             self.pilhaControleTipo.append("boolean")
             
-        elif top == "real" and subtop == "real":
-            
+        elif top == "real" and subtop == "real":    
             self.pilhaControleTipo.append("boolean")
+
         elif top == "integer" and subtop == "real":
-            
             self.pilhaControleTipo.append("boolean")
+
         elif top == "real" and subtop == "integer":
-            
             self.pilhaControleTipo.append("boolean")
         else:
             if self.lexemaAtual() == "end":
@@ -627,6 +647,7 @@ class AnalisadorSintatico:
 
 
     def verificacaoLogica(self):
+        # Verifica se os tipos dos dois operandos superiores da pilha de controle de tipos são compatíveis com a operação lógica.
         top = self.pilhaControleTipo.pop()
         subtop = self.pilhaControleTipo.pop()
 
@@ -640,17 +661,16 @@ class AnalisadorSintatico:
             exit(0)
 
     def verificacaoAtribuicao(self):
+        # Verifica se os tipos dos dois operandos superiores da pilha de controle de tipos são compatíveis com a operação de atribuição.
         top = self.pilhaControleTipo.pop()
         subtop = self.pilhaControleTipo.pop()
 
         if subtop == "real" and top == "integer":
-            self.pilhaControleTipo.append("real")
-        elif subtop == top:
-            self.pilhaControleTipo.append(subtop)
-        else:
+            pass
+        
+        elif subtop != top:
             if self.lexemaAtual() == "end":
                 print(f"Erro: tipos incompatíveis em atribuição na linha {self.linhaAnterior()}")
             else:
                 print(f"Erro: tipos incompatíveis em atribuição na linha {self.linhaAtual()}")
             exit(0)
-
